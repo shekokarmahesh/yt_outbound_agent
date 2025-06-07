@@ -2,6 +2,24 @@
 
 An AI-powered voice agent (Omee) for onboarding facilitators to the Ahoum spiritual tech platform. Uses LiveKit and Python for outbound calling.
 
+## 🚀 Quick Start with Docker (Recommended)
+
+The easiest way to run the agent is using Docker:
+
+```bash
+# 1. Copy environment template
+cp .env.production.example .env.local
+# Edit .env.local with your actual credentials
+
+# 2. Build and run
+docker-compose up --build
+
+# 3. Make a call
+lk dispatch create --new-room --agent-name ahoum-facilitator-onboarding --metadata '+1234567890'
+```
+
+📖 **[Complete Docker Setup Guide](DOCKER.md)**
+
 ## Dev Setup
 
 Run the following commands to:

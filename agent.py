@@ -147,11 +147,11 @@ async def entrypoint(ctx: JobContext):
                     f"SIP status: {e.metadata.get('sip_status_code')} "
                     f"{e.metadata.get('sip_status')}")
         ctx.shutdown()
-        return
-
-    # Wait for participant to join
+        return    # Wait for participant to join
     participant = await ctx.wait_for_participant(identity=user_identity)
-    logger.info(f"Participant {participant.identity} joined")    # Create and start the agent session
+    logger.info(f"Participant {participant.identity} joined")
+    
+    # Create and start the agent session
     session = AgentSession(
         stt=deepgram.STT(model="nova-2-phonecall"),
         llm=openai.LLM(model="gpt-4o-mini"),

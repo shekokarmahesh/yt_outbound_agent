@@ -1,4 +1,9 @@
 .env.local
+.env.production
 venv/
 .DS_Store
 outbound-trunk.json
+
+# Docker
+logs/
+.dockerignore

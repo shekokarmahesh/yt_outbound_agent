@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  ahoum-agent:
+    build: .
+    container_name: ahoum-facilitator-agent
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount logs directory for persistent logging
+      - ./logs:/app/logs
+    networks:
+      - ahoum-network
+    # Optional: Add resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    # Optional: Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  ahoum-network:
+    driver: bridge
+
+# Optional: Add volumes for persistent data
+volumes:
+  logs:
+    driver: local
