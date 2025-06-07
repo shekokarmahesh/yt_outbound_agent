@@ -1,6 +1,6 @@
-# LiveKit Outbound Caller Voice Agent
+# Ahoum Facilitator Onboarding Voice Agent
 
-A basic example of a voice agent using LiveKit and Python. Has a few extras to get started:
+An AI-powered voice agent (Omee) for onboarding facilitators to the Ahoum spiritual tech platform. Uses LiveKit and Python for outbound calling.
 
 ## Dev Setup
 
@@ -86,7 +86,7 @@ Open a new terminal while your agent is running. You can dispatch the agent to m
 ```console
 lk dispatch create \
   --new-room \
-  --agent-name outbound-caller \
+  --agent-name ahoum-facilitator-onboarding \
   --metadata '+1234567890'
 ```
 

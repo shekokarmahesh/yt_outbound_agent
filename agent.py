@@ -17,24 +17,28 @@ from livekit.agents import (
     get_job_context,
     function_tool,
 )
-from livekit.plugins import deepgram, openai, silero
+from livekit.plugins import (groq, silero, noise_cancellation, deepgram, openai)
 
 
 # load environment variables
 load_dotenv(dotenv_path=".env.local")
-logger = logging.getLogger("outbound-caller")
+logger = logging.getLogger("ahoum-facilitator-onboarding")
 logger.setLevel(logging.INFO)
 
 outbound_trunk_id = os.getenv("SIP_OUTBOUND_TRUNK_ID")
 _default_instructions = (
-    "You are a scheduling assistant for a game development studio. Your interface with user will be voice. "
-    "You will be on a call with a customer who has an upcoming appointment. Your goal is to confirm the appointment details. "
-    "As a customer service representative, you will be polite and professional at all times. Allow user to end the conversation."
+    "You are Omee, an AI assistant for Ahoum - a spiritual tech platform. Your interface with users will be voice-based phone calls. "
+    "You are calling potential facilitators to onboard them to the Ahoum platform. Your goal is to: "
+    "1. Introduce yourself and Ahoum briefly "
+    "2. Collect basic information from the facilitator (name, spiritual expertise, experience) "
+    "3. Provide a short overview of the platform's benefits for facilitators "
+    "4. Guide them towards the next steps for joining "
+    "Be warm, spiritual, professional, and respectful. Keep conversations concise but meaningful. Allow natural conversation flow."
 )
 
 
-class SchedulingAssistant(BaseAgent):
-    """Scheduling assistant agent with function tools"""
+class FacilitatorOnboardingAssistant(BaseAgent):
+    """AI assistant Omee for onboarding facilitators to Ahoum spiritual platform"""
     
     def __init__(self):
         super().__init__(instructions=_default_instructions)
@@ -47,27 +51,40 @@ class SchedulingAssistant(BaseAgent):
         return "Call ended successfully"
     
     @function_tool()
-    async def look_up_availability(
+    async def collect_facilitator_info(
         self,
-        date: Annotated[str, "The date of the appointment to check availability for"],
+        name: Annotated[str, "The facilitator's full name"],
+        expertise: Annotated[str, "Their spiritual/wellness expertise area (e.g. meditation, yoga, reiki, etc.)"],
+        experience: Annotated[str, "Years of experience or background in their field"],
     ):
-        """Called when the user asks about alternative appointment availability"""
-        logger.info(f"Looking up availability for {date}")
-        await asyncio.sleep(1)  # Simulate lookup
+        """Called to collect and store basic information about the potential facilitator"""
+        logger.info(f"Collecting info - Name: {name}, Expertise: {expertise}, Experience: {experience}")
+        return f"Thank you {name}! I've noted your expertise in {expertise} with {experience} of experience. This aligns perfectly with Ahoum's mission."
+    
+    @function_tool()
+    async def provide_platform_overview(self):
+        """Called to give a brief overview of the Ahoum platform benefits for facilitators"""
+        logger.info("Providing Ahoum platform overview")
         return json.dumps({
-            "available_times": ["1pm", "2pm", "3pm"],
-            "message": f"Available appointment slots for {date}: 1pm, 2pm, 3pm"
+            "platform_benefits": [
+                "Reach global audience of spiritual seekers",
+                "Flexible scheduling and session management",
+                "Secure payment processing",
+                "Community of like-minded facilitators",
+                "Technology-enhanced spiritual experiences"
+            ],
+            "message": "Ahoum connects you with seekers worldwide, handles payments, and provides tools for meaningful virtual spiritual sessions. You focus on guiding, we handle the tech."
         })
     
     @function_tool()
-    async def confirm_appointment(
+    async def schedule_next_steps(
         self,
-        date: Annotated[str, "date of the appointment"],
-        time: Annotated[str, "time of the appointment"],
+        contact_method: Annotated[str, "Preferred contact method (email, phone, WhatsApp)"],
+        availability: Annotated[str, "When they're available for follow-up"],
     ):
-        """Called when the user confirms their appointment on a specific date. Use this tool only when they are certain about the date and time."""
-        logger.info(f"Confirming appointment for {date} at {time}")
-        return f"Appointment confirmed for {date} at {time}. Thank you!"
+        """Called when facilitator wants to proceed with onboarding"""
+        logger.info(f"Scheduling next steps - Contact: {contact_method}, Availability: {availability}")
+        return f"Perfect! I'll arrange for our onboarding team to contact you via {contact_method} during {availability}. You'll receive detailed information and can start creating your facilitator profile."
     
     @function_tool()
     async def detected_answering_machine(self):
@@ -77,9 +94,9 @@ class SchedulingAssistant(BaseAgent):
         ctx = get_job_context()
         if ctx and hasattr(ctx, 'session'):
             await ctx.session.generate_reply(
-                instructions="Leave a brief voicemail message saying you'll call back later, then end the call."
+                instructions="Leave a brief, warm voicemail: 'Hi, this is Omee from Ahoum, a spiritual tech platform. I was calling to discuss facilitator opportunities. I'll try calling back later. Have a blessed day!'"
             )
-        await asyncio.sleep(2)  # Allow message to complete
+        await asyncio.sleep(3)  # Allow message to complete
         await hangup_call()
         return "Voicemail message left"
 
@@ -109,7 +126,7 @@ async def entrypoint(ctx: JobContext):
 
     # Get phone number from job metadata
     phone_number = ctx.job.metadata
-    logger.info(f"Dialing {phone_number}")
+    logger.info(f"Calling potential facilitator at {phone_number}")
     
     user_identity = "phone_user"
     
@@ -134,22 +151,20 @@ async def entrypoint(ctx: JobContext):
 
     # Wait for participant to join
     participant = await ctx.wait_for_participant(identity=user_identity)
-    logger.info(f"Participant {participant.identity} joined")
-
-    # Create and start the agent session
+    logger.info(f"Participant {participant.identity} joined")    # Create and start the agent session
     session = AgentSession(
         stt=deepgram.STT(model="nova-2-phonecall"),
         llm=openai.LLM(model="gpt-4o-mini"),
         tts=openai.TTS(),
         vad=silero.VAD.load(),
     )
-      # Store session in context for potential access by tools
+    # Store session in context for potential access by tools
     ctx.session = session
     
     # Start the session
     await session.start(
         room=ctx.room,
-        agent=SchedulingAssistant(),
+        agent=FacilitatorOnboardingAssistant(),
     )
     
     # Monitor call status
@@ -196,6 +211,6 @@ if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
-            agent_name="outbound-caller",  # Required for explicit dispatch
+            agent_name="ahoum-facilitator-onboarding",  # Required for explicit dispatch
         )
     )
