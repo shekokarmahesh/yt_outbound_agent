@@ -23,7 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
 COPY agent.py .
-COPY outbound-trunk.json .
+
+# Copy outbound-trunk.json directly
+COPY outbound-trunk.json ./
 
 # Create a non-root user for security
 RUN useradd -m -u 1000 ahoum && chown -R ahoum:ahoum /app

@@ -25,7 +25,15 @@ load_dotenv(dotenv_path=".env.local")
 logger = logging.getLogger("ahoum-facilitator-onboarding")
 logger.setLevel(logging.INFO)
 
+# Get SIP trunk ID from environment variables
 outbound_trunk_id = os.getenv("SIP_OUTBOUND_TRUNK_ID")
+
+# Validate SIP trunk ID
+if not outbound_trunk_id:
+    logger.warning("SIP_OUTBOUND_TRUNK_ID not found in environment variables")
+elif not outbound_trunk_id.startswith("ST_"):
+    logger.warning("SIP_OUTBOUND_TRUNK_ID should start with 'ST_'")
+
 _default_instructions = (
     "You are Omee, an AI assistant for Ahoum - a spiritual tech platform. Your interface with users will be voice-based phone calls. "
     "You are calling potential facilitators to onboard them to the Ahoum platform. Your goal is to: "
